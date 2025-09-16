@@ -48,7 +48,7 @@
 
     <!-- Footer -->
     <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-        <p>Desarrollador: <span class="font-semibold">Gustavo Ginés</span></p>
+        <p>Desarrollado por <span class="font-semibold">Gustavo Ginés</span></p>
     </div>
 
 </div>
