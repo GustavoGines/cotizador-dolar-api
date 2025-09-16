@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HealthController;
 
-Route::get('/', fn () => response('cotizador-dolar-api running ✅', 200));
+Route::get('/', fn() => 'cotizador-dolar-api running ✅');
 
 Route::get('/', function () {
     return view('convertidor');
