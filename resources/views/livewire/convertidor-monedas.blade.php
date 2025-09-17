@@ -16,7 +16,7 @@
 
         <!-- Tipo de dólar -->
         <div>
-            <label class="block text-sm font-medium">Tipo de Dólar</label>
+            <label class="block.live text-sm font-medium">Tipo de Dólar</label>
             <select wire:model.live="tipo"
                 class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2">
                 <option value="oficial">Oficial</option>
@@ -46,9 +46,56 @@
         </div>
     @endif
 
+    <!-- Botón de promedios -->
+    <div class="mt-6">
+        <div class="flex gap-2 items-center mb-3">
+            <select wire:model.live="anio" class="rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2 text-sm">
+                <option value="">Todos los Años</option>
+                @for($y = now()->year; $y >= 2020; $y--)
+                    <option value="{{ $y }}">{{ $y }}</option>
+                @endfor
+            </select>
+
+            <select wire:model.live="mes" class="rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2 text-sm">
+                <option value="">Todos los Meses</option>
+                @for($m = 1; $m <= 12; $m++)
+                    <option value="{{ $m }}">{{ \Carbon\Carbon::create()->month($m)->locale('es')->monthName }}</option>
+                @endfor
+            </select>
+
+            <button wire:click="cargarPromedios"
+                class="px-3 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 text-sm">
+                📊 Ver promedios
+            </button>
+        </div>
+
+        <!-- Mostrar tabla de promedios -->
+        @if($promedios && count($promedios) > 0)
+            <table class="w-full text-sm border border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden">
+                <thead class="bg-gray-100 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Año</th>
+                        <th class="px-3 py-2 text-left">Mes</th>
+                        <th class="px-3 py-2 text-left">Promedio (ARS)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($promedios as $p)
+                        <tr class="border-t border-gray-200 dark:border-zinc-700">
+                            <td class="px-3 py-2">{{ $p->anio }}</td>
+                            <td class="px-3 py-2">{{ \Carbon\Carbon::create()->month($p->mes)->locale('es')->monthName }}</td>
+                            <td class="px-3 py-2 font-bold">${{ number_format($p->promedio, 2, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @elseif($promedios && count($promedios) === 0)
+            <p class="text-sm text-gray-500 dark:text-gray-400">No hay datos para ese período.</p>
+        @endif
+    </div>
+
     <!-- Footer -->
     <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
         <p>Desarrollado por <span class="font-semibold">Gustavo Ginés</span></p>
     </div>
-
 </div>

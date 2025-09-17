@@ -4,6 +4,9 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
+use App\Models\Cotizacion;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ConvertidorMoneda extends Component
 {
@@ -11,6 +14,9 @@ class ConvertidorMoneda extends Component
     public $tipo = 'oficial';
     public $resultado;
     public $cotizacion;
+    public $promedios = [];
+    public $anio;
+    public $mes;
 
     public function mount()
     {
@@ -20,7 +26,6 @@ class ConvertidorMoneda extends Component
 
     public function updated($property)
     {
-        // Cada vez que cambia "valorUsd" o "tipo", actualizamos
         if (in_array($property, ['valorUsd', 'tipo'])) {
             $this->convertir();
         }
@@ -29,10 +34,8 @@ class ConvertidorMoneda extends Component
     public function actualizarCotizacion()
     {
         $baseUrl = config('services.dolarapi.url');
-        $response = Http::withOptions([
-            'verify' => false,
-        ])->get("{$baseUrl}/{$this->tipo}");
-
+        $response = Http::withOptions(['verify' => false])
+            ->get("{$baseUrl}/{$this->tipo}");
 
         if ($response->ok()) {
             $data = $response->json();
@@ -57,6 +60,33 @@ class ConvertidorMoneda extends Component
         }
 
         $this->resultado = $this->valorUsd * $this->cotizacion;
+
+        // ✅ Guardar histórico en la BD
+        Cotizacion::create([
+            'tipo'       => $this->tipo,
+            'tipo_valor' => 'venta',
+            'valor'      => $this->cotizacion,
+            'fecha'      => Carbon::now(),
+        ]);
+    }
+
+    public function cargarPromedios()
+    {
+        $query = DB::table('cotizaciones')
+            ->selectRaw('YEAR(fecha) as anio, MONTH(fecha) as mes, AVG(valor) as promedio')
+            ->where('tipo', $this->tipo)
+            ->where('tipo_valor', 'venta')
+            ->groupBy('anio', 'mes')
+            ->orderByDesc('anio')
+            ->orderByDesc('mes');
+
+        if ($this->anio && $this->mes) {
+            $query->whereYear('fecha', $this->anio)
+                  ->whereMonth('fecha', $this->mes);
+        }
+
+        $this->promedios = $query->get();
+        
     }
 
     public function render()

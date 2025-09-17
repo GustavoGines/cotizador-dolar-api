@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB; // 👈 IMPORTANTE
+use App\Models\Cotizacion;
+use Carbon\Carbon;
 
 class CotizacionController extends Controller
 {
@@ -57,6 +60,14 @@ class CotizacionController extends Controller
         // ✅ Calcular resultado en pesos
         $resultado = (float) $valor * (float) $cotizacion;
 
+        // ✅ Guardar histórico automáticamente
+        Cotizacion::create([
+            'tipo'       => $tipo,
+            'tipo_valor' => 'venta',
+            'valor'      => $cotizacion,
+            'fecha'      => Carbon::now(),
+        ]);
+
         // ✅ Respuesta unificada
         return response()->json([
             'tipo'       => $tipo,
@@ -65,4 +76,39 @@ class CotizacionController extends Controller
             'resultado'  => round($resultado, 2)
         ]);
     }
+
+    public function promedioMensual(Request $request)
+    {
+        $tipo = $request->input('tipo', 'blue');
+        $tipoValor = $request->input('tipo_valor', 'venta');
+        $anio = $request->input('anio');
+        $mes = $request->input('mes');
+    
+        $query = DB::table('cotizaciones')
+            ->where('tipo', $tipo)
+            ->where('tipo_valor', $tipoValor);
+    
+        if ($anio && $mes) {
+            // ✅ Promedio de un mes en particular
+            $promedio = $query->whereYear('fecha', $anio)
+                              ->whereMonth('fecha', $mes)
+                              ->avg('valor');
+    
+            return response()->json([
+                'anio'     => (int) $anio,
+                'mes'      => (int) $mes,
+                'promedio' => round($promedio, 2),
+            ]);
+        } else {
+            // ✅ Promedio agrupado de todos los meses
+            $resultados = $query->selectRaw('YEAR(fecha) as anio, MONTH(fecha) as mes, AVG(valor) as promedio')
+                ->groupBy(DB::raw('YEAR(fecha), MONTH(fecha)'))
+                ->orderByDesc('anio')
+                ->orderByDesc('mes')
+                ->get();
+    
+            return response()->json($resultados);
+        }
+    }
+
 }
