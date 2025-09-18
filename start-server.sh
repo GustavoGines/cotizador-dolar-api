@@ -14,7 +14,7 @@ rm -f bootstrap/cache/*.php || true
 php artisan config:clear || true
 php artisan route:clear  || true
 php artisan view:clear   || true
-php artisan cache:clear || true
+php artisan cache:clear  || true
 
 # 2) Enlaces y permisos mínimos
 php artisan storage:link || true
@@ -26,11 +26,11 @@ if [[ "${CACHE_ROUTES:-1}" == "1" ]]; then
 fi
 php artisan view:cache || true
 
-# 4) Migraciones con retry (evita fallar si la DB tarda)
+# 4) Migraciones con retry (solo en pgsql)
 if [[ "${RUN_MIGRATIONS:-1}" == "1" ]]; then
-  echo ">> Running migrations (with retry) using pgsql_direct"
+  echo ">> Running migrations (with retry) using pgsql"
   for i in {1..5}; do
-    if php artisan migrate --force --database=pgsql_direct; then
+    if php artisan migrate --force --database=pgsql; then
       echo ">> Migrations OK"
       break
     fi
