@@ -6,8 +6,8 @@
     <div class="space-y-4">
         <!-- Monto en USD -->
         <div>
-            <label class="block text-sm font-medium">Monto en USD</label>
-            <input type="number" step="0.01" wire:model.live="valorUsd"
+            <label for="valorUsd" class="block text-sm font-medium">Monto en USD</label>
+            <input type="number" step="0.01" id="valorUsd" wire:model.live="valorUsd"
                 class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2" />
             @error('valorUsd') 
                 <p class="text-red-500 text-sm">{{ $message }}</p> 
@@ -16,8 +16,8 @@
 
         <!-- Tipo de dólar -->
         <div>
-            <label class="block.live text-sm font-medium">Tipo de Dólar</label>
-            <select wire:model.live="tipo"
+            <label for="tipo" class="block text-sm font-medium">Tipo de Dólar</label>
+            <select id="tipo" wire:model.live="tipo"
                 class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2">
                 <option value="oficial">Oficial</option>
                 <option value="blue">Blue</option>
@@ -82,9 +82,13 @@
                 <tbody>
                     @foreach($promedios as $p)
                         <tr class="border-t border-gray-200 dark:border-zinc-700">
-                            <td class="px-3 py-2">{{ $p->anio }}</td>
-                            <td class="px-3 py-2">{{ \Carbon\Carbon::create()->month($p->mes)->locale('es')->monthName }}</td>
-                            <td class="px-3 py-2 font-bold">${{ number_format($p->promedio, 2, ',', '.') }}</td>
+                            <td class="px-3 py-2">{{ $p['anio'] ?? '-' }}</td>
+                            <td class="px-3 py-2">
+                                {{ isset($p['mes']) ? \Carbon\Carbon::create()->month($p['mes'])->locale('es')->monthName : '-' }}
+                            </td>
+                            <td class="px-3 py-2 font-bold">
+                                ${{ number_format($p['promedio'] ?? 0, 2, ',', '.') }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
