@@ -26,7 +26,7 @@ class CotizacionController extends Controller
         }
 
         try {
-            $data = $this->svc->convertir((float)$valor, $tipo);
+            $data = $this->svc->convertir((float) $valor, $tipo);
             return response()->json($data);
         } catch (\Throwable $e) {
             return response()->json([
@@ -43,7 +43,9 @@ class CotizacionController extends Controller
         $mes       = $request->input('mes');
 
         try {
+            // El service ya devuelve con EXTRACT() para PostgreSQL
             $resultados = $this->svc->promedios($tipo, $tipoValor, $anio, $mes);
+
             return response()->json($resultados);
         } catch (\Throwable $e) {
             return response()->json([

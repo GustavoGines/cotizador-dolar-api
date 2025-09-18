@@ -40,8 +40,8 @@ class ConvertidorMoneda extends Component
         }
 
         try {
-            $svc = app(CotizacionService::class); // 👈 se obtiene aquí
-            $data = $svc->convertir((float)$this->valorUsd, $this->tipo);
+            $svc = app(CotizacionService::class);
+            $data = $svc->convertir((float) $this->valorUsd, $this->tipo);
 
             $this->cotizacion = $data['cotizacion'] ?? null;
             $this->resultado  = $data['resultado']  ?? null;
@@ -54,13 +54,14 @@ class ConvertidorMoneda extends Component
 
     public function cargarPromedios()
     {
-        $svc = app(CotizacionService::class); // 👈 también aquí
+        $svc = app(CotizacionService::class);
         $rows = $svc->promedios($this->tipo, 'venta', $this->anio, $this->mes);
 
+        // Normalizamos para que siempre sean enteros y float
         $this->promedios = $rows->map(fn($r) => [
-            'anio'     => $r->anio,
-            'mes'      => $r->mes,
-            'promedio' => $r->promedio,
+            'anio'     => (int) $r->anio,
+            'mes'      => (int) $r->mes,
+            'promedio' => round((float) $r->promedio, 2),
         ])->toArray();
     }
 

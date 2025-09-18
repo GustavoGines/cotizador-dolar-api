@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
@@ -11,7 +10,6 @@ class CotizacionService
 {
     public function convertir(float $valor, string $tipo = 'oficial'): array
     {
-        // 👉 Base URL tomada de config/services.php (que a su vez usa DOLAR_API_BASE_URL)
         $baseUrl = rtrim(config('services.dolarapi.url'), '/');
         $url = "{$baseUrl}/{$tipo}";
 
@@ -33,7 +31,7 @@ class CotizacionService
             throw new \RuntimeException('Cotización no disponible.');
         }
 
-        // ✅ Guarda o actualiza una sola vez por día (evita duplicados)
+        // Guarda/actualiza 1 vez por día
         Cotizacion::updateOrCreate(
             [
                 'tipo'       => $tipo,
@@ -61,11 +59,19 @@ class CotizacionService
             ->where('tipo', $tipo)
             ->where('tipo_valor', $tipoValor);
 
-        if ($anio) $q->whereYear('fecha', $anio);
-        if ($mes)  $q->whereMonth('fecha', $mes);
+        if ($anio) {
+            $q->whereRaw('EXTRACT(YEAR FROM fecha) = ?', [$anio]);
+        }
+        if ($mes) {
+            $q->whereRaw('EXTRACT(MONTH FROM fecha) = ?', [$mes]);
+        }
 
-        return $q->selectRaw('YEAR(fecha) as anio, MONTH(fecha) as mes, AVG(valor) as promedio')
-            ->groupBy('anio', 'mes')
+        return $q->selectRaw(
+                'EXTRACT(YEAR FROM fecha) as anio, 
+                 EXTRACT(MONTH FROM fecha) as mes, 
+                 AVG(valor) as promedio'
+            )
+            ->groupByRaw('EXTRACT(YEAR FROM fecha), EXTRACT(MONTH FROM fecha)')
             ->orderByDesc('anio')
             ->orderByDesc('mes')
             ->get();
