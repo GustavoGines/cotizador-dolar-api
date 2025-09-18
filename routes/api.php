@@ -24,6 +24,6 @@ Route::get('/cotizaciones/promedio-mensual', [CotizacionController::class, 'prom
 
 // Ejemplos de uso:
 // Conversión: http://127.0.0.1:8000/api/convertir?valor=150&tipo=blue
-// Promedios (todo):  http://127.0.0.1:8000/api/promedio-mensual?tipo=oficial
-// Promedios (solo 2024): http://127.0.0.1:8000/api/promedio-mensual?tipo=oficial&anio=2024
-// Promedios (solo marzo 2024): http://127.0.0.1:8000/api/promedio-mensual?tipo=oficial&anio=2024&mes=3
+// Promedios (todo):  http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial
+// Promedios (solo 2024): http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial&anio=2024
+// Promedios (solo marzo 2024): http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial&anio=2024&mes=3
