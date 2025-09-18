@@ -14,7 +14,8 @@ class CotizacionService
         $baseUrl = rtrim(config('services.dolarapi.url'), '/');
         $url = "{$baseUrl}/{$tipo}";
 
-        $resp = Http::withOptions(['verify' => false])
+        $resp = Http::withOptions(['verify' => app()->environment('local') ? false : true
+        ])
             ->timeout(8)
             ->retry(2, 200)
             ->get($url);

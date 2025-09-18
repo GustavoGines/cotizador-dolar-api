@@ -1,28 +1,53 @@
 #!/usr/bin/env bash
-set -e
+set -Eeuo pipefail
 
-# 0) Elimina cualquier config/ruta cacheada del repo anterior
-rm -f bootstrap/cache/*.php
+echo ">> Booting container at $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-# 1) Limpiar sin tocar el store "database"
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
+# 0) Validaciones previas (clave de app obligatoria en prod)
+if [[ -z "${APP_KEY:-}" ]]; then
+  echo "ERROR: APP_KEY no está definida. Configurala en las Environment Variables de Render."
+  exit 1
+fi
 
-# 2) Generar APP_KEY si falta
-if [ -z "$APP_KEY" ]; then php artisan key:generate --force; fi
-
-# 3) Cachear solo lo seguro
-php artisan config:cache
-# OJO: si tenés closures en rutas, dejá comentado:
-# php artisan route:cache
-php artisan view:cache || true
-
-# 4) (Opcional) limpiar cache explícitamente usando el store file
+# 1) Limpiar caches viejos (idempotente)
+rm -f bootstrap/cache/*.php || true
+php artisan config:clear || true
+php artisan route:clear  || true
+php artisan view:clear   || true
 php artisan cache:clear --store=file || true
 
-# 5) Enlazar storage
+# 2) Enlaces y permisos mínimos
 php artisan storage:link || true
 
-# 6) Levantar Apache
+# 3) Cacheos seguros
+php artisan config:cache || true
+if [[ "${CACHE_ROUTES:-1}" == "1" ]]; then
+  php artisan route:cache || true
+fi
+php artisan view:cache || true
+
+# 4) Migraciones con retry (evita fallar si la DB tarda)
+if [[ "${RUN_MIGRATIONS:-1}" == "1" ]]; then
+  echo ">> Running migrations (with retry) using pgsql_direct"
+  for i in {1..5}; do
+    if php artisan migrate --force --database=pgsql_direct; then
+      echo ">> Migrations OK"
+      break
+    fi
+    echo ">> Attempt $i failed, retrying in 3s..."
+    sleep 3
+  done
+
+  # 4b) Seed inicial solo si cotizaciones está vacía
+  count=$(php artisan tinker --execute="echo DB::table('cotizaciones')->count();" 2>/dev/null || echo 0)
+  if [[ "$count" -eq 0 ]]; then
+    echo ">> Cotizaciones vacía, corriendo seed inicial..."
+    php artisan db:seed --force
+  else
+    echo ">> Cotizaciones ya tiene $count registros, se salta seed."
+  fi
+fi
+
+# 5) Iniciar Apache
+echo ">> Starting Apache"
 exec apache2-foreground

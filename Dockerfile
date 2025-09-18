@@ -1,50 +1,79 @@
-# --------------------
-# Etapa 1: build de assets con Node
-# --------------------
-FROM node:20 as build-assets
+# ============ Etapa 1: Build de assets con Node (Vite) ============
+FROM node:20 AS build-assets
 WORKDIR /app
 
-# Copiamos package.json y lock para instalar dependencias
-COPY package*.json vite.config.js tailwind.config.js ./
-# (si usás postcss.config.js, también copiá ese)
+# Copio solo lo necesario para cachear npm ci
+COPY package*.json ./
+# Si usás pnpm/yarn, adaptá esto
+
+# Instalo deps
+RUN npm ci
+
+# Copio el código de frontend
+COPY vite.config.js tailwind.config.js postcss.config.js* ./ 
 COPY resources ./resources
 
-RUN npm ci
+# Build de assets (Vite)
+ENV NODE_ENV=production
 RUN npm run build
 
-# --------------------
-# Etapa 2: PHP + Apache
-# --------------------
+
+# ============ Etapa 2: Vendor PHP (Composer) ============
+FROM composer:2 AS vendor
+WORKDIR /app
+
+# Copio solo composer.* para cachear vendor
+COPY composer.json composer.lock ./
+# Instalo sin dev, sin scripts (scripts los maneja Laravel solo si hace falta)
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+
+# ============ Etapa 3: PHP + Apache (runtime) ============
 FROM php:8.2-apache
 
-RUN apt-get update && apt-get install -y \
-    git zip unzip libzip-dev libonig-dev \
- && docker-php-ext-install pdo pdo_mysql mbstring zip
+# Paquetes del sistema y extensiones PHP
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git unzip zip libzip-dev libonig-dev libpq-dev \
+  && docker-php-ext-install -j$(nproc) pdo pdo_mysql pdo_pgsql zip \
+  && docker-php-ext-enable opcache \
+  && rm -rf /var/lib/apt/lists/*
 
-# Configurar Apache
+# Apache: DocumentRoot en /public y rewrite
 RUN a2enmod rewrite
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf \
- && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf \
- && printf "\n<Directory /var/www/html/public>\n    AllowOverride All\n</Directory>\n" >> /etc/apache2/apache2.conf
+ && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}/../!g' /etc/apache2/apache2.conf \
+ && printf "\n<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n" >> /etc/apache2/apache2.conf
 
-# Copiar composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Opcache recomendado en producción
+RUN { \
+      echo 'opcache.enable=1'; \
+      echo 'opcache.enable_cli=1'; \
+      echo 'opcache.jit=1255'; \
+      echo 'opcache.jit_buffer_size=128M'; \
+      echo 'opcache.memory_consumption=128'; \
+      echo 'opcache.interned_strings_buffer=16'; \
+      echo 'opcache.max_accelerated_files=20000'; \
+      echo 'opcache.validate_timestamps=0'; \
+    } > /usr/local/etc/php/conf.d/opcache.ini
 
+# Copio el código de la app
 WORKDIR /var/www/html
-
-# Copiamos el proyecto Laravel completo
 COPY . .
 
-# Copiamos los assets compilados desde la etapa Node
+# Copio vendor de la etapa composer (evita correr composer aquí)
+COPY --from=vendor /app/vendor /var/www/html/vendor
+
+# Copio los assets compilados (Vite) desde la etapa Node
+# (esto crea public/build con manifest y chunks)
 COPY --from=build-assets /app/public/build /var/www/html/public/build
 
-# Instalar dependencias PHP
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
-
-# Permisos
+# Permisos mínimos para cache y logs
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
+
+# Composer no es estrictamente necesario en runtime, pero puede ser útil si hacés tasks
+# COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Script de arranque
 COPY start-server.sh /usr/local/bin/start-server.sh
