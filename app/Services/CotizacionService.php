@@ -11,11 +11,13 @@ class CotizacionService
 {
     public function convertir(float $valor, string $tipo = 'oficial'): array
     {
+        // 👉 Base URL tomada de config/services.php (que a su vez usa DOLAR_API_BASE_URL)
         $baseUrl = rtrim(config('services.dolarapi.url'), '/');
         $url = "{$baseUrl}/{$tipo}";
 
-        $resp = Http::withOptions(['verify' => app()->environment('local') ? false : true
-        ])
+        $resp = Http::withOptions([
+                'verify' => app()->environment('local') ? false : true
+            ])
             ->timeout(8)
             ->retry(2, 200)
             ->get($url);
@@ -31,7 +33,7 @@ class CotizacionService
             throw new \RuntimeException('Cotización no disponible.');
         }
 
-        // Guarda/actualiza 1 vez por día (evita duplicados)
+        // ✅ Guarda o actualiza una sola vez por día (evita duplicados)
         Cotizacion::updateOrCreate(
             [
                 'tipo'       => $tipo,

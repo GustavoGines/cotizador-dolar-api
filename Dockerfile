@@ -32,7 +32,7 @@ FROM php:8.2-apache
 # Paquetes del sistema y extensiones PHP
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git unzip zip libzip-dev libonig-dev libpq-dev \
-  && docker-php-ext-install -j$(nproc) pdo pdo_mysql pdo_pgsql zip \
+  && docker-php-ext-install -j$(nproc) pdo_mysql pdo_pgsql zip \
   && docker-php-ext-enable opcache \
   && rm -rf /var/lib/apt/lists/*
 
