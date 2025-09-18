@@ -3,14 +3,12 @@ FROM node:20 AS build-assets
 WORKDIR /app
 
 # Copio solo lo necesario para cachear npm ci
-COPY package*.json ./
-# Si usás pnpm/yarn, adaptá esto
+COPY package*.json vite.config.js ./
 
-# Instalo deps
+# Instalo dependencias
 RUN npm ci
 
 # Copio el código de frontend
-COPY vite.config.js ./ 
 COPY resources ./resources
 
 # Build de assets (Vite)
@@ -22,10 +20,10 @@ RUN npm run build
 FROM composer:2 AS vendor
 WORKDIR /app
 
-# Copio solo composer.* para cachear vendor
 COPY composer.json composer.lock ./
-# Instalo sin dev, sin scripts (scripts los maneja Laravel solo si hace falta)
-RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+# Instalo sin dev, sin scripts (artisan aún no existe)
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-scripts
 
 
 # ============ Etapa 3: PHP + Apache (runtime) ============
@@ -61,19 +59,15 @@ RUN { \
 WORKDIR /var/www/html
 COPY . .
 
-# Copio vendor de la etapa composer (evita correr composer aquí)
+# Copio vendor de la etapa composer (sin reejecutar composer aquí)
 COPY --from=vendor /app/vendor /var/www/html/vendor
 
 # Copio los assets compilados (Vite) desde la etapa Node
-# (esto crea public/build con manifest y chunks)
 COPY --from=build-assets /app/public/build /var/www/html/public/build
 
 # Permisos mínimos para cache y logs
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
-
-# Composer no es estrictamente necesario en runtime, pero puede ser útil si hacés tasks
-# COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Script de arranque
 COPY start-server.sh /usr/local/bin/start-server.sh
