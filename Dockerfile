@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Copio el código de frontend
-# COPY vite.config.js tailwind.config.js postcss.config.js* ./ 
+COPY vite.config.js ./ 
 COPY resources ./resources
 
 # Build de assets (Vite)
