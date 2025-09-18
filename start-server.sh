@@ -14,7 +14,7 @@ rm -f bootstrap/cache/*.php || true
 php artisan config:clear || true
 php artisan route:clear  || true
 php artisan view:clear   || true
-php artisan cache:clear --store=file || true
+php artisan cache:clear || true
 
 # 2) Enlaces y permisos mínimos
 php artisan storage:link || true
