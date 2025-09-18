@@ -67,8 +67,6 @@ COPY --from=vendor /app/vendor /var/www/html/vendor
 
 # Copio los assets compilados (Vite) desde la etapa Node
 COPY --from=build-assets /app/public/build /var/www/html/public/build
-# 👇 aseguramos que también se copie el manifest (por si no queda en build)
-COPY --from=build-assets /app/public/manifest.json /var/www/html/public/manifest.json
 
 # Permisos mínimos para cache y logs
 RUN chown -R www-data:www-data storage bootstrap/cache \
