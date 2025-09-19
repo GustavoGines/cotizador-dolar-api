@@ -10,10 +10,13 @@ RUN npm ci
 
 # Copio el código de frontend
 COPY resources ./resources
+# Copio la carpeta public también (necesaria para que exista public/build)
+COPY public ./public
+
 
 # Build de assets (Vite)
 ENV NODE_ENV=production
-RUN npm run build
+RUN rm -rf node_modules && npm ci && npm run build
 
 # 👀 Debug temporal (puedes quitar después)
 RUN ls -la /app/public/build || true
