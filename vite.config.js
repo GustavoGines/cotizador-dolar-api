@@ -12,13 +12,7 @@ export default defineConfig({
         outDir: 'public/build',
         manifest: true,
         emptyOutDir: true,
-        rollupOptions: {
-            output: {
-                entryFileNames: 'assets/[name]-[hash].js',
-                chunkFileNames: 'assets/[name]-[hash].js',
-                assetFileNames: 'assets/[name]-[hash][extname]',
-            },
-        },
+        manifestDir: '.'
     },
     server: {
         host: '0.0.0.0',
