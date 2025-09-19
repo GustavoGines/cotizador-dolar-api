@@ -5,6 +5,9 @@ WORKDIR /app
 # Copio solo lo necesario para cachear npm ci
 COPY package*.json vite.config.js ./
 
+# Instalo dependencias
+RUN npm ci
+
 # Copio el código de frontend
 COPY resources ./resources
 # Copio la carpeta public también (necesaria para que exista public/build)
@@ -13,7 +16,7 @@ COPY public ./public
 
 # Build de assets (Vite)
 ENV NODE_ENV=production
-RUN npm ci && npm run build
+RUN npm run build
 
 # 👀 Debug temporal (puedes quitar después)
 RUN ls -la /app/public/build || true
