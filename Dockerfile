@@ -15,6 +15,8 @@ COPY public ./public
 # Build de assets (Vite)
 ENV NODE_ENV=production
 RUN npm run build
+# 👀 Mover el manifest al lugar esperado por Laravel
+RUN mv /app/public/build/.vite/manifest.json /app/public/build/manifest.json
 
 # 👀 Debug: mostrar que se generó manifest.json
 RUN echo ">> Archivos en /app/public/build:" && ls -la /app/public/build
