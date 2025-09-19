@@ -9,9 +9,16 @@ export default defineConfig({
         }),
     ],
     build: {
-        outDir: 'public/build',   // 👈 asegura que se genere en /public/build
-        manifest: true,           // 👈 obligatorio para Laravel en prod
+        outDir: 'public/build',
+        manifest: true,
         emptyOutDir: true,
+        rollupOptions: {
+            output: {
+                entryFileNames: 'assets/[name]-[hash].js',
+                chunkFileNames: 'assets/[name]-[hash].js',
+                assetFileNames: 'assets/[name]-[hash][extname]',
+            },
+        },
     },
     server: {
         host: '0.0.0.0',
