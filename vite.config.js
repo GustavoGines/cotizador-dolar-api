@@ -12,7 +12,6 @@ export default defineConfig({
         outDir: 'public/build',
         manifest: true,
         emptyOutDir: true,
-        manifestDir: '.'
     },
     server: {
         host: '0.0.0.0',
