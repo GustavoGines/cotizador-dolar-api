@@ -10,6 +10,7 @@ RUN npm ci
 
 # Copio el código fuente necesario para el build
 COPY resources ./resources
+COPY public ./public
 
 # Build de assets (Vite)
 ENV NODE_ENV=production
