@@ -13,6 +13,7 @@ class VersionController extends Controller
             'version'     => config('app_version.latest'),
             'min_version' => config('app_version.minimum'),
             'url'         => config('app_version.url'),
+            'notes'       => config('app_version.notes'),
         ]);
     }
 }

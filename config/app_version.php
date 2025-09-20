@@ -1,12 +1,15 @@
 <?php
 
 return [
-    // Última versión disponible de la app
-    'latest' => '1.2.0',
+    // Versión publicada actualmente (tu Flutter está en 1.0.5)
+    'latest'  => env('APP_LATEST_VERSION', '1.0.5'),
 
-    // Versión mínima soportada (si el usuario tiene menos, debe actualizar sí o sí)
-    'minimum' => '1.0.5',
+    // Versión mínima soportada (si el user tiene menos, forzá update)
+    'minimum' => env('APP_MIN_VERSION', '1.0.5'),
 
-    // URL de descarga de la APK
-    'url' => env('APP_UPDATE_URL', 'https://tuservidor.com/apk/cotizador-1.2.0.apk'),
+    // URL del APK (podés dejarla vacía hasta subir la 1.0.6)
+    'url'     => env('APP_UPDATE_URL', null),
+
+    // (opcional) notas de la versión para mostrar en Flutter
+    'notes'   => env('APP_UPDATE_NOTES', null),
 ];

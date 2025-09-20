@@ -23,7 +23,7 @@ Route::get('/promedio-mensual', [CotizacionController::class, 'promedioMensual']
 Route::get('/cotizaciones/promedio-mensual', [CotizacionController::class, 'promedioMensual'])
     ->name('api.promedio.alt');
 
-Route::get('/version', VersionController::class);
+Route::get('/version', VersionController::class)->name('api.version');
 
 // Ejemplos de uso:
 // Conversión: http://127.0.0.1:8000/api/convertir?valor=150&tipo=blue
