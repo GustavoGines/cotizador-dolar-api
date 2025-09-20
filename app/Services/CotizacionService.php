@@ -49,6 +49,43 @@ class CotizacionService
         ];
     }
 
+    public function cotizacion(string $tipo = 'oficial'): float
+    {
+        $baseUrl = rtrim(config('services.dolarapi.url'), '/');
+        $url = "{$baseUrl}/{$tipo}";
+    
+        $resp = Http::withOptions([
+                'verify' => app()->environment('local') ? false : true
+            ])
+            ->timeout(8)
+            ->retry(2, 200)
+            ->get($url);
+    
+        if ($resp->failed()) {
+            throw new \RuntimeException('No se pudo obtener la cotización.');
+        }
+    
+        $data = $resp->json();
+        $cotizacion = $data['venta'] ?? $data['promedio'] ?? null;
+    
+        if (!$cotizacion) {
+            throw new \RuntimeException('Cotización no disponible.');
+        }
+    
+        // Guarda/actualiza 1 vez por día
+        Cotizacion::updateOrCreate(
+            [
+                'tipo'       => $tipo,
+                'tipo_valor' => 'venta',
+                'fecha'      => Carbon::today(),
+            ],
+            ['valor' => $cotizacion]
+        );
+    
+        return (float) $cotizacion;
+    }
+
+
     public function promedios(
         string $tipo = 'oficial',
         string $tipoValor = 'venta',
