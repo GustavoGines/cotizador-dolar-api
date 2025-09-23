@@ -9,22 +9,17 @@ if [[ -z "${APP_KEY:-}" ]]; then
   exit 1
 fi
 
-# 1) Limpiar caches viejos (idempotente)
-rm -f bootstrap/cache/*.php || true
-php artisan config:clear || true
-php artisan route:clear  || true
-php artisan view:clear   || true
-php artisan cache:clear  || true
+# 1) Limpiar caches
+php artisan optimize:clear || true
 
-# 2) Enlaces y permisos mínimos
+# 2) Enlace storage
 php artisan storage:link || true
 
-# 3) Cacheos seguros
+# 3) Cachear para producción
 php artisan config:cache || true
-if [[ "${CACHE_ROUTES:-1}" == "1" ]]; then
-  php artisan route:cache || true
-fi
-php artisan view:cache || true
+php artisan route:cache  || true
+php artisan view:cache   || true
+php artisan optimize     || true
 
 # 4) Migraciones con retry (solo en pgsql)
 if [[ "${RUN_MIGRATIONS:-1}" == "1" ]]; then
