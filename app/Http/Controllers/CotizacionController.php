@@ -16,18 +16,30 @@ class CotizacionController extends Controller
 
     public function convertir(Request $request)
     {
-        $valor = $request->query('valor');
-        $tipo  = $request->query('tipo', 'oficial');
-
+        $valor     = $request->query('valor');
+        $tipo      = $request->query('tipo', 'oficial');
+        $direccion = $request->query('direccion', 'usd_a_pesos');
+    
         if ($valor === null || !is_numeric($valor)) {
             return response()->json([
-                'error' => 'Debe enviar un valor numérico en dólares.'
+                'error' => 'Debe enviar un valor numérico válido.'
             ], 400);
         }
-
+    
         try {
-            $data = $this->svc->convertir((float) $valor, $tipo);
-            return response()->json($data);
+            $cotizacion = $this->svc->cotizacion($tipo);
+    
+            $resultado = $direccion === 'usd_a_pesos'
+                ? round($valor * $cotizacion, 2)
+                : round($valor / $cotizacion, 2);
+    
+            return response()->json([
+                'tipo'       => $tipo,
+                'direccion'  => $direccion,
+                'valor'      => (float) $valor,
+                'cotizacion' => $cotizacion,
+                'resultado'  => $resultado,
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage()
@@ -37,16 +49,28 @@ class CotizacionController extends Controller
 
     public function promedioMensual(Request $request)
     {
-        $tipo      = $request->input('tipo', 'blue');
-        $tipoValor = $request->input('tipo_valor', 'venta');
-        $anio      = $request->input('anio');
-        $mes       = $request->input('mes');
-
+        $tipo      = $request->query('tipo', 'oficial');
+        $tipoValor = $request->query('tipo_valor', 'venta');
+        $anio      = $request->query('anio');
+        $mes       = $request->query('mes');
+    
         try {
-            // El service ya devuelve con EXTRACT() para PostgreSQL
-            $resultados = $this->svc->promedios($tipo, $tipoValor, $anio, $mes);
-
-            return response()->json($resultados);
+            $rows = $this->svc->promedios($tipo, $tipoValor, $anio, $mes);
+    
+            // Normalizamos formato
+            $resultados = $rows->map(fn($r) => [
+                'anio'     => (int) $r->anio,
+                'mes'      => (int) $r->mes,
+                'promedio' => round((float) $r->promedio, 2),
+            ])->toArray();
+    
+            return response()->json([
+                'tipo'      => $tipo,
+                'tipo_valor'=> $tipoValor,
+                'anio'      => $anio,
+                'mes'       => $mes,
+                'resultados'=> $resultados,
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'error' => $e->getMessage()

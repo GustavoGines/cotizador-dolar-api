@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\Api\VersionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -22,8 +23,11 @@ Route::get('/promedio-mensual', [CotizacionController::class, 'promedioMensual']
 Route::get('/cotizaciones/promedio-mensual', [CotizacionController::class, 'promedioMensual'])
     ->name('api.promedio.alt');
 
+Route::get('/version', VersionController::class)->name('api.version');
+
 // Ejemplos de uso:
 // Conversión: http://127.0.0.1:8000/api/convertir?valor=150&tipo=blue
 // Promedios (todo):  http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial
 // Promedios (solo 2024): http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial&anio=2024
 // Promedios (solo marzo 2024): http://127.0.0.1:8000/api/cotizaciones/promedio-mensual?tipo=oficial&anio=2024&mes=3
+// Versión de la app: http://127.0.0.1:8000/api/version

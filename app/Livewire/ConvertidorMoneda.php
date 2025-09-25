@@ -7,13 +7,16 @@ use App\Services\CotizacionService;
 
 class ConvertidorMoneda extends Component
 {
-    public $valorUsd;
+    public $valor;
     public $tipo = 'oficial';
+    public $direccion = 'usd_a_pesos'; // valor por defecto
     public $resultado;
     public $cotizacion;
     public $promedios = [];
     public $anio;
     public $mes;
+    
+
 
     public function mount()
     {
@@ -22,7 +25,7 @@ class ConvertidorMoneda extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['valorUsd', 'tipo'])) {
+        if (in_array($property, ['valor', 'tipo', 'direccion'])) {
             $this->convertir();
         }
     }
@@ -30,25 +33,31 @@ class ConvertidorMoneda extends Component
     public function convertir()
     {
         $this->validate([
-            'valorUsd' => 'nullable|numeric|min:0.1',
+            'valor' => 'nullable|numeric|min:0.1',
             'tipo'     => 'required|string',
+            'direccion' => 'required|string|in:usd_a_pesos,pesos_a_usd',
         ]);
 
-        if (!$this->valorUsd) {
+        if (!$this->valor) {
             $this->resultado = null;
             return;
         }
 
         try {
             $svc = app(CotizacionService::class);
-            $data = $svc->convertir((float) $this->valorUsd, $this->tipo);
+            $cotizacion = $svc->cotizacion($this->tipo);
 
-            $this->cotizacion = $data['cotizacion'] ?? null;
-            $this->resultado  = $data['resultado']  ?? null;
+            $this->cotizacion = $cotizacion;
+
+            if ($this->direccion === 'usd_a_pesos') {
+                $this->resultado = round($this->valor * $cotizacion, 2);
+            } else {
+                $this->resultado = round($this->valor / $cotizacion, 2);
+            }
         } catch (\Throwable $e) {
             $this->cotizacion = null;
             $this->resultado  = null;
-            $this->addError('valorUsd', 'No se pudo convertir: ' . $e->getMessage());
+            $this->addError('valor', 'No se pudo convertir: ' . $e->getMessage());
         }
     }
 

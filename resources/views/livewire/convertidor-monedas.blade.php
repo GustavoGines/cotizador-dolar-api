@@ -4,12 +4,28 @@
     </h2>
 
     <div class="space-y-4">
-        <!-- Monto en USD -->
+        <!-- Dirección de conversión -->
         <div>
-            <label for="valorUsd" class="block text-sm font-medium">Monto en USD</label>
-            <input type="number" step="0.01" id="valorUsd" wire:model.live="valorUsd"
+            <label for="direccion" class="block text-sm font-medium">Conversión</label>
+            <select id="direccion" wire:model.live="direccion"
+                class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2">
+                <option value="usd_a_pesos">USD → ARS</option>
+                <option value="pesos_a_usd">ARS → USD</option>
+            </select>
+        </div>
+
+        <!-- Monto -->
+        <div>
+            <label for="valor" class="block text-sm font-medium">
+                @if($direccion === 'usd_a_pesos')
+                    Monto en USD
+                @else
+                    Monto en ARS
+                @endif
+            </label>
+            <input type="number" step="0.01" id="valor" wire:model.live="valor"
                 class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2" />
-            @error('valorUsd') 
+            @error('valor') 
                 <p class="text-red-500 text-sm">{{ $message }}</p> 
             @enderror
         </div>
@@ -41,7 +57,13 @@
         <div class="mt-4 p-3 bg-emerald-50 dark:bg-zinc-700 rounded-lg animate-fadeIn">
             <p class="text-lg">
                 Resultado: 
-                <span class="font-bold">${{ number_format($resultado, 2, ',', '.') }}</span> ARS
+                <span class="font-bold">
+                    @if($direccion === 'usd_a_pesos')
+                        ${{ number_format($resultado, 2, ',', '.') }} ARS
+                    @else
+                        {{ number_format($resultado, 2, ',', '.') }} USD
+                    @endif
+                </span>
             </p>
         </div>
     @endif
