@@ -56,7 +56,7 @@ jobs:
         working-directory: ${{ env.FRONTEND_DIR }}
         run: |
           echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/my-release-key.jks
-          cat > android/key.properties <<'EOF'
+          cat > android/key.properties <<EOF
           storePassword=${ANDROID_KEYSTORE_PASSWORD}
           keyPassword=${ANDROID_KEY_PASSWORD}
           keyAlias=${ANDROID_KEY_ALIAS}
