@@ -1,0 +1,77 @@
+name: build-frontend-apk-and-release
+
+on:
+  push:
+    tags:
+      - 'v*'   # dispara al pushear tags v1.0.9, v2.0.0, etc.
+
+permissions:
+  contents: write  # necesario para crear/actualizar releases en este repo
+
+env:
+  FRONTEND_REPO: GustavoGines/cotizador-flutter   # <-- nombre del repo Flutter
+  FRONTEND_DIR: cotizador-flutter                # carpeta donde se clona
+  BASE_API: https://cotizador-dolar-api.onrender.com/api
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (backend)
+        uses: actions/checkout@v4
+
+      - name: Checkout Flutter app (frontend)
+        run: |
+          git clone https://github.com/${{ env.FRONTEND_REPO }}.git ${{ env.FRONTEND_DIR }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
+      - name: Flutter pub get
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: flutter pub get
+
+      # --- OPCIÓN A: build sin firma (APK unsigned, ideal pruebas) ---
+      - name: Build APK (release, unsigned)
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: |
+          flutter build apk --release \
+            --dart-define=BASE_API=${{ env.BASE_API }} \
+            --dart-define=ANALYTICS=true
+
+      # --- OPCIÓN B: build firmado (producción) ---
+      # Requiere secrets: ANDROID_KEYSTORE_B64, ANDROID_KEY_ALIAS, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD
+      # - Descomentar este bloque y comentar el bloque "unsigned" de arriba.
+      # - Subí los secrets en Settings > Secrets and variables > Actions (del BACKEND).
+      #
+      # - name: Prepare signing files
+      #   working-directory: ${{ env.FRONTEND_DIR }}
+      #   run: |
+      #     echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/my-release-key.jks
+      #     cat > android/key.properties <<'EOF'
+      #     storePassword=${ANDROID_KEYSTORE_PASSWORD}
+      #     keyPassword=${ANDROID_KEY_PASSWORD}
+      #     keyAlias=${ANDROID_KEY_ALIAS}
+      #     storeFile=../app/my-release-key.jks
+      #     EOF
+      #   env:
+      #     ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+      #     ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      #     ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      #     ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Create/Update Release (attach APK)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.FRONTEND_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
