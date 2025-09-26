@@ -40,33 +40,40 @@ jobs:
         run: flutter pub get
 
       # --- OPCIÓN A: build sin firma (APK unsigned, ideal pruebas) ---
-      - name: Build APK (release, unsigned)
-        working-directory: ${{ env.FRONTEND_DIR }}
-        run: |
-          flutter build apk --release \
-            --dart-define=BASE_API=${{ env.BASE_API }} \
-            --dart-define=ANALYTICS=true
+      # - name: Build APK (release, unsigned)
+      #  working-directory: ${{ env.FRONTEND_DIR }}
+      #  run: |
+      #    flutter build apk --release \
+      #      --dart-define=BASE_API=${{ env.BASE_API }} \
+      #      --dart-define=ANALYTICS=true
 
       # --- OPCIÓN B: build firmado (producción) ---
       # Requiere secrets: ANDROID_KEYSTORE_B64, ANDROID_KEY_ALIAS, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD
       # - Descomentar este bloque y comentar el bloque "unsigned" de arriba.
       # - Subí los secrets en Settings > Secrets and variables > Actions (del BACKEND).
       #
-      # - name: Prepare signing files
-      #   working-directory: ${{ env.FRONTEND_DIR }}
-      #   run: |
-      #     echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/my-release-key.jks
-      #     cat > android/key.properties <<'EOF'
-      #     storePassword=${ANDROID_KEYSTORE_PASSWORD}
-      #     keyPassword=${ANDROID_KEY_PASSWORD}
-      #     keyAlias=${ANDROID_KEY_ALIAS}
-      #     storeFile=../app/my-release-key.jks
-      #     EOF
-      #   env:
-      #     ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-      #     ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      #     ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      #     ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Prepare signing files
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: |
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/my-release-key.jks
+          cat > android/key.properties <<'EOF'
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          storeFile=../app/my-release-key.jks
+          EOF
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Build APK (release, signed)
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: |
+          flutter build apk --release \
+            --dart-define=BASE_API=${{ env.BASE_API }} \
+            --dart-define=ANALYTICS=true
 
       - name: Create/Update Release (attach APK)
         uses: softprops/action-gh-release@v2
