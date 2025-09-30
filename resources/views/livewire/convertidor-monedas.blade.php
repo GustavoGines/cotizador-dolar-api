@@ -121,7 +121,7 @@
     </div>
 
     <!-- Promo App Móvil -->
-    <div class="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 md:p-5 flex items-start gap-4">
+    <div class="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 md:p-5 flex flex-col sm:flex-row items-start gap-4">
       <div class="text-3xl md:text-4xl">📱</div>
       <div class="flex-1">
         <h3 class="text-base md:text-lg font-semibold">Descargá la App Móvil</h3>
@@ -156,16 +156,17 @@
 
       <!-- QR SIEMPRE visible -->
       <div class="mt-4 w-full flex sm:w-auto sm:block">
-        <img
-          src="{{ route('qr.apk') }}"
-          alt="QR descarga APK"
-          class="w-24 h-24 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white p-1"
-          loading="lazy"
-          decoding="async"
-        />
-        <p class="mt-1 text-[10px] text-center text-zinc-500 dark:text-zinc-400">Escaneá el QR</p>
-      </div>
-    </div>
+          <img
+            src="{{ route('qr.apk') }}"
+            alt="QR descarga APK"
+            class="w-28 h-28 sm:w-24 sm:h-24 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white p-1 mx-auto sm:mx-0"
+            loading="lazy"
+            decoding="async"
+          />
+          <p class="mt-1 text-[10px] text-center text-zinc-500 dark:text-zinc-400 w-full sm:w-auto">
+            Escaneá el QR
+          </p>
+        </div>
 
     <!-- Footer -->
     <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
