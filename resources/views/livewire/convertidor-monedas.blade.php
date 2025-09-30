@@ -25,8 +25,8 @@
             </label>
             <input type="number" step="0.01" id="valor" wire:model.live="valor"
                 class="mt-1 w-full rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2" />
-            @error('valor') 
-                <p class="text-red-500 text-sm">{{ $message }}</p> 
+            @error('valor')
+                <p class="text-red-500 text-sm">{{ $message }}</p>
             @enderror
         </div>
 
@@ -47,7 +47,7 @@
     <!-- Mostrar cotización -->
     @if($cotizacion)
         <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            💵 Cotización actual ({{ ucfirst($tipo) }}): 
+            💵 Cotización actual ({{ ucfirst($tipo) }}):
             <span class="font-bold">${{ number_format($cotizacion, 2, ',', '.') }}</span> ARS
         </div>
     @endif
@@ -56,7 +56,7 @@
     @if($resultado)
         <div class="mt-4 p-3 bg-emerald-50 dark:bg-zinc-700 rounded-lg animate-fadeIn">
             <p class="text-lg">
-                Resultado: 
+                Resultado:
                 <span class="font-bold">
                     @if($direccion === 'usd_a_pesos')
                         ${{ number_format($resultado, 2, ',', '.') }} ARS
@@ -68,7 +68,7 @@
         </div>
     @endif
 
-    <!-- Botón de promedios -->
+    <!-- Filtros (se mantienen) + Ver promedios -->
     <div class="mt-6">
         <div class="flex gap-2 items-center mb-3">
             <select wire:model.live="anio" class="rounded-lg border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 p-2 text-sm">
@@ -91,32 +91,81 @@
             </button>
         </div>
 
-        <!-- Mostrar tabla de promedios -->
-        @if($promedios && count($promedios) > 0)
+        <!-- Vista paginada por año (aparece recién al tocar Ver promedios) -->
+        @if($promediosVisibles)
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <button
+                        wire:click="prevYear"
+                        class="h-8 w-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $anioActual <= $anioMin ? 'opacity-40 pointer-events-none' : '' }}"
+                        title="Año anterior"
+                    >
+                        ←
+                    </button>
+
+                    <div class="px-3 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-sm">
+                        {{ $anioActual }}
+                    </div>
+
+                    <button
+                        wire:click="nextYear"
+                        class="h-8 w-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $anioActual >= $anioMax ? 'opacity-40 pointer-events-none' : '' }}"
+                        title="Año siguiente"
+                    >
+                        →
+                    </button>
+                </div>
+            </div>
+
             <table class="w-full text-sm border border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden">
                 <thead class="bg-gray-100 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-3 py-2 text-left">Año</th>
                         <th class="px-3 py-2 text-left">Mes</th>
                         <th class="px-3 py-2 text-left">Promedio (ARS)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($promedios as $p)
-                        <tr class="border-t border-gray-200 dark:border-zinc-700">
-                            <td class="px-3 py-2">{{ $p['anio'] ?? '-' }}</td>
-                            <td class="px-3 py-2">
-                                {{ isset($p['mes']) ? \Carbon\Carbon::create()->month($p['mes'])->locale('es')->monthName : '-' }}
+                    @if($mes) {{-- Mostrar SOLO el mes seleccionado --}}
+                        @php
+                            $row = $promedios[0] ?? null;
+                            $nombreMes = \Carbon\Carbon::create($anioActual, (int)$mes, 1)->locale('es')->monthName;
+                        @endphp
+                        <tr class="border-t border-gray-200 dark:border-zinc-700 bg-emerald-50 dark:bg-emerald-900/20">
+                            <td class="px-3 py-2 capitalize">
+                                {{ $nombreMes }}
+                                <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 dark:bg-emerald-800 dark:text-emerald-100">
+                                    filtrado
+                                </span>
                             </td>
                             <td class="px-3 py-2 font-bold">
-                                ${{ number_format($p['promedio'] ?? 0, 2, ',', '.') }}
+                                @if($row && $row['promedio'] !== null)
+                                    ${{ number_format($row['promedio'], 2, ',', '.') }}
+                                @else
+                                    -
+                                @endif
                             </td>
                         </tr>
-                    @endforeach
+                    @else {{-- Mostrar los 12 meses del año en pantalla --}}
+                        @for($m = 1; $m <= 12; $m++)
+                            @php
+                                $row = collect($promedios)->firstWhere('mes', $m);
+                                $nombreMes = \Carbon\Carbon::create($anioActual, $m, 1)->locale('es')->monthName;
+                            @endphp
+                            <tr class="border-t border-gray-200 dark:border-zinc-700">
+                                <td class="px-3 py-2 capitalize">{{ $nombreMes }}</td>
+                                <td class="px-3 py-2 font-bold">
+                                    @if($row && $row['promedio'] !== null)
+                                        ${{ number_format($row['promedio'], 2, ',', '.') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            </tr>
+                        @endfor
+                    @endif
                 </tbody>
+
             </table>
-        @elseif($promedios && count($promedios) === 0)
-            <p class="text-sm text-gray-500 dark:text-gray-400">No hay datos para ese período.</p>
         @endif
     </div>
 
@@ -130,7 +179,6 @@
         </p>
 
         <div class="mt-3 flex flex-wrap items-center gap-2">
-          {{-- APK directo (siempre usa tu variable global) --}}
           <a
             href="{{ config('app.apk_url') ?? 'https://github.com/GustavoGines/cotizador-dolar-api/releases/latest/download/app-release.apk' }}"
             rel="noopener"
@@ -139,7 +187,6 @@
             ⬇️ Descargar APK Android
           </a>
 
-          {{-- Placeholder Play Store (deshabilitado por ahora) --}}
           <span
             class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm cursor-not-allowed"
             title="Próximamente"
@@ -154,7 +201,7 @@
         </p>
       </div>
 
-      <!-- QR SIEMPRE visible -->
+      <!-- QR visible en mobile y desktop -->
       <div class="mt-4 w-full flex sm:w-auto sm:block">
           <img
             src="{{ route('qr.apk') }}"
@@ -168,6 +215,7 @@
           </p>
         </div>
     </div>
+
     <!-- Footer -->
     <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
         <p>Desarrollado por <span class="font-semibold">Gustavo Ginés</span></p>
