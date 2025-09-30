@@ -155,7 +155,7 @@
       </div>
 
       <!-- QR SIEMPRE visible -->
-      <div class="hidden sm:block">
+      <div class="mt-4 w-full flex sm:w-auto sm:block">
         <img
           src="{{ route('qr.apk') }}"
           alt="QR descarga APK"
