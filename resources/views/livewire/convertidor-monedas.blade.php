@@ -167,7 +167,7 @@
             Escaneá el QR
           </p>
         </div>
-
+    </div>
     <!-- Footer -->
     <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
         <p>Desarrollado por <span class="font-semibold">Gustavo Ginés</span></p>
